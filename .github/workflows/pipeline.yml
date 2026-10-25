@@ -1,9 +1,40 @@
-name: MediCart Pipeline
-on: push
+
+name: MediCart pipeline
+
+on:
+  push:
+    branches: [main]
+
 jobs:
-  build:-test:
+  build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Run tests
-        run: echo "All tests passed!" && exit 0
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  deliver:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: medicart-build-${{ github.sha }}
+          path: dist/
+          retention-days: 7
